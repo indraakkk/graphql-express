@@ -42,6 +42,7 @@ const start = async () => {
     await new Promise((resolve) => app.listen({ port: port }, resolve));
     console.log(`Server running at ${port}`);
   } catch (error) {
+    console.log(error)
     console.log('server crash!!!!');
   }
 };
