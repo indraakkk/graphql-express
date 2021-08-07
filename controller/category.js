@@ -10,9 +10,9 @@ module.exports = {
     }
   },
   getById: async () => {},
-  create: async () => {
+  create: async (args) => {
     try {
-      let data = await Model.create(arg);
+      let data = await Model.create(args);
       return data;
     } catch (error) {
       console.log(error);
