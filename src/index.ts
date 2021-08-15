@@ -1,22 +1,55 @@
+import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
+import 'reflect-metadata';
+import * as dotenv from 'dotenv';
+import { buildSchema } from 'type-graphql';
+import { connect } from 'mongoose';
+import { UsersResolver } from './resolvers/User';
 
-const app = express();
+dotenv.config();
 
-interface Params {
-  a: number;
-  b: number;
-}
+const port = process.env.PORT || 3000;
 
-type Add = (x: Params) => number;
+const main = async () => {
+  const schema = await buildSchema({
+    resolvers: [UsersResolver],
+    emitSchemaFile: true,
+    validate: false,
+  });
 
-const add: Add = (x) => {
-  return x.a + x.b;
+  const mongoose = await connect(`${process.env.DB_CONNECTION}`, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  await mongoose.connection;
+
+  const server = new ApolloServer({ schema });
+
+  const app = express();
+
+  server.applyMiddleware({ app });
+
+  // app.get('/', (res) => {
+  //   res.status(200).send('typescript + express + graphql + mongodb stacks');
+  // });
+
+  const service = app.listen({ port: port }, () => {
+    console.log(process.env.DB_CONNECTION);
+    console.log(
+      `🚀 Server ready and listening at ==> http://localhost:${port}`
+    );
+    console.log(`🚀 open graphql at ==> http://localhost:${port}/graphql`);
+  });
+
+  process.on('SIGTERM', () => {
+    console.log('🔴 Received SIGTERM. Shutting down server...');
+    service.close(() => {
+      console.log('✅ Server closed.');
+    });
+    process.exit(0);
+  });
 };
 
-app.get('/', req => {
-  add({ a: 1, b: 2 });
-});
-
-app.listen(9001, () => {
-  console.log('Server listening on port 9001');
+main().catch((err) => {
+  console.error(err, 'error');
 });
